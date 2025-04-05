@@ -33,14 +33,12 @@ const LandingPage = () => {
 
   return (
     <div className="bg-[#0B1226] text-white w-full pb-10 min-h-screen font-mono overflow-x-hidden relative">
-      {/* Glowing background blobs */}
       <div className="absolute top-0 left-0 w-full h-full -z-10 overflow-hidden">
         <div className="absolute top-20 left-10 w-72 h-72 bg-pink-500 opacity-20 rounded-full filter blur-3xl animate-blob"></div>
         <div className="absolute top-[40%] left-[60%] w-96 h-96 bg-blue-600 opacity-20 rounded-full filter blur-2xl animate-blob animation-delay-2000"></div>
         <div className="absolute bottom-10 right-10 w-60 h-60 bg-purple-500 opacity-20 rounded-full filter blur-2xl animate-blob animation-delay-4000"></div>
       </div>
 
-      {/* Navbar */}
       <div className="navbar flex justify-between items-center px-6 py-4 shadow-md shadow-cyan-500/10">
         <img src={logo} className="w-44 -mt-7 animate-float" alt="logo" />
         <div className="flex -mt-12 gap-4">
@@ -57,7 +55,6 @@ const LandingPage = () => {
         </div>
       </div>
 
-      {/* Animated Headline */}
       <div className="text-center mt-20 mb-12 px-4">
         <h1 className="text-6xl md:text-7xl font-extrabold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent animate-float drop-shadow-xl">
           Welcome to HACKHEAVEN
@@ -72,7 +69,6 @@ const LandingPage = () => {
         </button>
       </div>
 
-      {/* Screenshots Section */}
       <div className="relative mb-7 flex justify-center items-center mt-20 px-4">
         <img
           src={sc1}
