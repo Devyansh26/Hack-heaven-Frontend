@@ -45,8 +45,43 @@ const MainPage = () => {
     }
   };
 
-  const handleLogout = () => {
-    navigate("/login");
+  const handleLogout = async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      // If no token exists, just redirect to login
+      localStorage.removeItem("user"); // Clear user data if present
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:5000/logout", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        // Clear token and user data from localStorage
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("user");
+        navigate("/login"); // Redirect to login page
+      } else {
+        console.error("Logout failed:", await response.json());
+        // Optionally force logout on client side even if server fails
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("user");
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Clear token and redirect even if the request fails
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
+      navigate("/login");
+    }
   };
 
   return (

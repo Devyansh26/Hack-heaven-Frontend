@@ -1,30 +1,158 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "./../assets/HackHeaven.png";
 import avatar from "./../assets/avatar.jpg";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState({
-    name: "Ketan_1317",
-    email: "ketan@hackheaven.com",
-    bio: "I am a software engineer with a passion for hacking and innovation. I recently joined HackHeaven to learn and grow in the tech industry.",
-    followers: 1000,
-    coins: 200,
-    avatar: avatar,
-  });
+  const [user, setUser] = useState(null); // initially null
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        // For debugging, let's check what we have in localStorage
+        const storedUserEmail = localStorage.getItem("user");
+        const token = localStorage.getItem("token");
+
+        console.log("Stored user email:", storedUserEmail);
+        console.log("Token available:", !!token);
+
+        if (!storedUserEmail || !token) {
+          console.error("Missing user email or token in localStorage");
+          setError("You need to login first");
+          navigate("/login");
+          return;
+        }
+
+        // Test a simple GET request to the server first
+        console.log("Testing connection to server...");
+        const testResponse = await fetch("http://localhost:5000/", {
+          method: "GET"
+        });
+        
+        if (!testResponse.ok) {
+          throw new Error(`Server connection test failed: ${testResponse.status}`);
+        }
+        
+        console.log("Server connection successful, fetching profile...");
+
+        // Now fetch the actual profile
+        const response = await fetch("http://localhost:5000/profile", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        console.log("Profile response status:", response.status);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(`Failed to fetch profile: ${response.status} - ${errorData.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log("Profile data received:", data);
+
+        setUser({
+          ...data,
+          name: data.username || data.name, // Handle both username and name
+          avatar: data.avatar || avatar // Use provided avatar or default
+        });
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        setError(err.message || "Failed to load profile");
+        
+        // Only navigate to login if it's an authentication error
+        if (err.message.includes("401") || err.message.includes("403")) {
+          navigate("/login");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [navigate]);
 
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
 
-  const handleSave = () => {
-    alert("Changes saved successfully!");
+  const handleSave = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("You need to login again");
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch('http://localhost:5000/update-profile', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: user.name,
+          email: user.email,
+          bio: user.bio
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Failed to update profile: ${errorData.message || response.statusText}`);
+      }
+
+      alert("Changes saved successfully!");
+    } catch (err) {
+      console.error("Error saving profile:", err);
+      alert(err.message || "Failed to save changes");
+    }
   };
 
   const handleBackToHome = () => {
     navigate("/");
   };
+
+  if (loading) {
+    return <div className="text-white text-center mt-10">Loading profile...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="bg-[#0B1226] text-white w-full min-h-screen font-mono flex flex-col items-center justify-center">
+        <div className="bg-red-500/10 border border-red-500 rounded-lg p-6 max-w-md">
+          <h2 className="text-2xl font-bold mb-4">Error Loading Profile</h2>
+          <p className="mb-4">{error}</p>
+          <div className="flex gap-4">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-xl shadow-lg"
+            >
+              Retry
+            </button>
+            <button
+              onClick={handleBackToHome}
+              className="px-4 py-2 bg-gradient-to-r from-gray-700 to-gray-800 text-white font-semibold rounded-xl shadow-lg"
+            >
+              Back to Home
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <div className="text-white text-center mt-10">No user data available.</div>;
+  }
 
   return (
     <div className="bg-[#0B1226] text-white w-full pb-20 min-h-screen font-mono overflow-x-hidden relative">
@@ -45,7 +173,7 @@ const Profile = () => {
         <div className="flex items-center gap-5 mr-10 -mt-10 transition-all duration-300 animate-fadeIn">
           <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-cyan-500/30 shadow-lg hover:shadow-cyan-400/40 transition-all duration-300 hover:scale-105">
             <img
-              src={user.avatar}
+              src={avatar}
               alt="User Avatar"
               className="w-full h-full object-cover rounded-full"
             />
@@ -115,6 +243,7 @@ const Profile = () => {
         >
           Account
         </div>
+        
 
         <div className="flex flex-col gap-6 w-full text-white text-lg">
           <div>
@@ -149,7 +278,7 @@ const Profile = () => {
             </label>
             <textarea
               name="bio"
-              value={user.bio}
+              value={user.bio || ""}
               onChange={handleChange}
               rows={4}
               className="bg-gray-800 px-4 py-3 w-full rounded-xl outline-none focus:ring-2 focus:ring-cyan-500 text-lg font-medium transition-all resize-none"
@@ -164,7 +293,7 @@ const Profile = () => {
               Save Changes
             </button>
             <button
-              onClick={handleBackToHome}
+              onClick={() => navigate("/main")}
               className="mt-4 px-6 py-3 bg-gradient-to-r from-gray-700 to-gray-800 text-white font-semibold text-lg rounded-xl shadow-lg hover:scale-105 hover:shadow-gray-500/50 transition-all duration-300 ease-in-out"
             >
               Back to Home

@@ -3,66 +3,64 @@ import { MdEmail } from 'react-icons/md';
 import { FaLock } from 'react-icons/fa';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import { FcGoogle } from 'react-icons/fc';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, redirect, useNavigate } from 'react-router-dom';
 import logo from './../assets/HackHeaven.png';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({});
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [error, setError] = useState(""); // Added error state for better feedback
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  
+
   const handleSignUpClick = () => {
     navigate('/signup');
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email is invalid';
-    }
-    
-    if (!password) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (validateForm()) {
-      setIsLoading(true);
-      
-      // Simulate API call
-      setTimeout(() => {
-        // For demo purposes, just navigate to main page
-        // In a real app, you would verify credentials with your backend
-        navigate('/');
-        setIsLoading(false);
-      }, 1500);
-    }
-  };
-
   const handleGoogleLogin = () => {
     setIsLoading(true);
-    
-    // Simulate Google OAuth process
     setTimeout(() => {
-      // For demo purposes, just navigate to main page
       navigate('/');
       setIsLoading(false);
     }, 1500);
   };
+
+  const handleLoginChange = (e) => {
+    setLoginData({ ...loginData, [e.target.name]: e.target.value });
+  };
+
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    setError(""); // Clear previous errors
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loginData),
+      });
+
+      const data = await response.json();
+      console.log("Login response:", data); // Debug: Log server response
+
+      if (response.ok) {
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("user", data.email); 
+        alert("Login successful!");
+        // navigate("/profile");
+        window.location.href = "http://localhost:5173/main";
+        console.log("After redirect")
+      } else {
+        setError(data.msg || "Login failed");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Failed to connect to the server. Please check if the backend is running.");
+    } finally {
+      setIsLoading(false);
+    }
+  };  
 
   return (
     <div className="bg-[#0B1226] text-white w-full min-h-screen pb-10 font-mono overflow-x-hidden relative">
@@ -87,35 +85,35 @@ const Login = () => {
 
       <main className="flex justify-center items-center mt-16 px-4">
         <div className="w-full max-w-md bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-8 shadow-lg shadow-cyan-500/10 animate-fadeIn">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <h1 className="text-3xl text-center mb-8 font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent animate-float drop-shadow-xl">HackHeaven</h1>
+          
+          {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
+          
+          <form className="space-y-6" onSubmit={handleLoginSubmit}>
             <div className="relative">
-              <h1 className="text-3xl text-center mb-8 font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent animate-float drop-shadow-xl">HackHeaven</h1>
               <div className="flex items-center">
                 <MdEmail className="absolute ml-3 text-gray-400" />
                 <input
+                  name="email"
                   type="email"
                   placeholder="Hehe@chitkara.edu.in"
-                  className={`w-full pl-10 pr-4 py-2 rounded-lg bg-white/10 text-white border ${
-                    errors.email ? 'border-red-500' : 'border-white/20'
-                  } focus:outline-none focus:ring-2 focus:ring-[#00C896]`}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-[#00C896]"
+                  value={loginData.email}
+                  onChange={handleLoginChange}
                 />
               </div>
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
             </div>
 
             <div className="relative">
               <div className="flex items-center">
                 <FaLock className="absolute ml-3 text-gray-400" />
                 <input
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className={`w-full pl-10 pr-10 py-2 rounded-lg bg-white/10 text-white border ${
-                    errors.password ? 'border-red-500' : 'border-white/20'
-                  } focus:outline-none focus:ring-2 focus:ring-[#00C896]`}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-[#00C896]"
+                  value={loginData.password}
+                  onChange={handleLoginChange}
                 />
                 <div
                   className="absolute right-3 cursor-pointer text-xl text-gray-400"
@@ -124,7 +122,6 @@ const Login = () => {
                   {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
                 </div>
               </div>
-              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
               <div className="flex justify-end mt-1">
                 <Link to="/forgot-password" className="text-gray-400 text-sm hover:text-[#00C896] transition-colors">
                   Forgot password?
@@ -135,9 +132,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-2 mt-4 bg-gradient-to-r from-[#00C896] to-[#1E90FF] hover:from-[#00a87e] hover:to-[#187bcd] text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 ${
-                isLoading ? 'opacity-70 cursor-not-allowed' : ''
-              }`}
+              className={`w-full py-2 mt-4 bg-gradient-to-r from-[#00C896] to-[#1E90FF] hover:from-[#00a87e] hover:to-[#187bcd] text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               {isLoading ? (
                 <span className="flex items-center justify-center">
@@ -160,9 +155,7 @@ const Login = () => {
           <button 
             onClick={handleGoogleLogin}
             disabled={isLoading}
-            className={`w-full flex items-center justify-center gap-3 py-2 border border-white/20 rounded-xl hover:bg-white/10 transition-all duration-300 hover:scale-105 ${
-              isLoading ? 'opacity-70 cursor-not-allowed' : ''
-            }`}
+            className={`w-full flex items-center justify-center gap-3 py-2 border border-white/20 rounded-xl hover:bg-white/10 transition-all duration-300 hover:scale-105 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
             <FcGoogle className="text-2xl" />
             <span className="text-white font-medium">Continue with Google</span>

@@ -14,13 +14,13 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<MainPage />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/commonroom" element={<CommonRoom />} />
           <Route path="/onevone" element={<OnevOne />} />
-          <Route path="/landing" element={<LandingPage />} />
+          <Route path="/main" element={<MainPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
